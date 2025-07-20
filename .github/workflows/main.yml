@@ -52,22 +52,6 @@ on:
         default: ""
 
 jobs:
-  notify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Send Telegram Notification
-        run: |
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F message_thread_id="${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}" \
-            -F text="
-            🚀 Build started for Kernel! 
-            📦 *Repository:* [${{ github.repository }}](https://github.com/${{ github.repository }})
-            🗂️ *Branch:* ${{ github.ref_name }}
-            ✏️ *Commit:* [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-            [🔗 View GitHub Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" \
-            -F parse_mode="Markdown"
-            
   set-matrix:
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -95,30 +79,6 @@ jobs:
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
 
-  build-kernels-a13:
-    needs: set-matrix
-    uses: ./.github/workflows/kernel-a13.yml
-    secrets: inherit
-    strategy:
-      fail-fast: true
-      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
-    with:
-      kernelsu_variant: ${{ matrix.kernelsu_variant }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
-      kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
-
-  build-kernels-a14:
-    needs: set-matrix
-    uses: ./.github/workflows/kernel-a14.yml
-    secrets: inherit
-    strategy:
-      fail-fast: true
-      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
-    with:
-      kernelsu_variant: ${{ matrix.kernelsu_variant }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch }}
-      kernelsu_branch_other: ${{ inputs.kernelsu_branch_other }}
-
   build-kernels-a15:
     needs: set-matrix
     uses: ./.github/workflows/kernel-a15.yml
@@ -136,13 +96,11 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build-kernels-a12
-      - build-kernels-a13
-      - build-kernels-a14
       - build-kernels-a15
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_NAME: "GKI Kernels With WildKSU & SUSFS v1.5.9"
-      RELEASE_BODY:
+      RELEASE_BODY: "e"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -289,16 +247,4 @@ jobs:
         run: |
           echo "GitHub release created with the following files:"
           ls ./downloaded-artifacts/**/*
-            
-      - name: Send Telegram Notification
-        run: |
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F message_thread_id="${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}" \
-            -F text="
-            🌽 *New Kernel Release Uploaded*  
-            📦 *Repository:* [${{ github.repository }}](https://github.com/${{ github.repository }})  
-            🗂️ *Branch:* ${{ github.ref_name }}  
-            ✏️ *Commit:* [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
-            [🔗 View GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }})" \
-            -F parse_mode="Markdown"
+          
